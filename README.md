@@ -1,6 +1,6 @@
 # Error Report Processor
 
-A Streamlit app that converts weekly Aetna error report emails into Jira tickets and Google Sheet log entries — replacing a manual, CLI-driven workflow with a point-and-click web UI.
+A Streamlit app that converts weekly error report emails into Jira tickets and Google Sheet log entries — replacing a manual, CLI-driven workflow with a point-and-click web UI.
 
 ## What it does
 
