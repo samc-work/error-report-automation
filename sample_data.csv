@@ -1,0 +1,14 @@
+Date Logged,Report Date,Error Type,New Count,Jira Ticket,Jira URL,Status,Notes
+03/10/2026,03/10/26,Error 22 & 33,195,COD-1247,https://example.atlassian.net/browse/COD-1247,Open,
+03/10/2026,03/10/26,FAILED_IMAGES,47,COD-1248,https://example.atlassian.net/browse/COD-1248,In Progress,
+03/10/2026,03/10/26,MISSING_CDF,23,COD-1249,https://example.atlassian.net/browse/COD-1249,Open,
+03/03/2026,03/03/26,Error 42,78,COD-1238,https://example.atlassian.net/browse/COD-1238,Done,Resolved by vendor
+03/03/2026,03/03/26,Error 22 & 33,212,COD-1237,https://example.atlassian.net/browse/COD-1237,Done,
+03/03/2026,03/03/26,FAILED_IMAGES,61,COD-1236,https://example.atlassian.net/browse/COD-1236,Done,
+02/24/2026,02/24/26,Error 34,14,COD-1229,https://example.atlassian.net/browse/COD-1229,Done,
+02/24/2026,02/24/26,Error 48,33,COD-1228,https://example.atlassian.net/browse/COD-1228,In Progress,Pending vendor response
+02/24/2026,02/24/26,MISSING_CDF,18,COD-1227,https://example.atlassian.net/browse/COD-1227,Done,
+02/17/2026,02/17/26,Error 22 & 33,183,COD-1219,https://example.atlassian.net/browse/COD-1219,Done,
+02/17/2026,02/17/26,Error 14,7,COD-1218,https://example.atlassian.net/browse/COD-1218,Done,
+02/10/2026,02/10/26,Error 53,42,COD-1211,https://example.atlassian.net/browse/COD-1211,Done,
+02/10/2026,02/10/26,FAILED_IMAGES,39,COD-1210,https://example.atlassian.net/browse/COD-1210,Done,
