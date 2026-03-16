@@ -9,13 +9,17 @@ st.set_page_config(
 import pandas as pd
 from datetime import datetime
 
-from config import ERROR_DESCRIPTION_MAP, ERROR_TITLE_MAP
+from config import ERROR_DESCRIPTION_MAP, ERROR_TITLE_MAP, JIRA_URL, JIRA_API_TOKEN
 from database import init_db, is_error_already_tracked, log_error, update_last_seen, get_all_open_errors
 from s3_handler import get_file_for_error, cleanup_temp_files
 from jira_handler import create_ticket, find_existing_ticket
 from file_parser import parse_missing_cdf, parse_missing_images
 from sheets_handler import log_to_sheet, init_sheet
 from sync_status import sync_jira_to_sheet
+
+# ── Demo mode ─────────────────────────────────────────────────────────────────
+# Active whenever real credentials haven't been configured.
+DEMO_MODE = not (JIRA_URL and JIRA_API_TOKEN and not JIRA_URL.startswith("https://your-org"))
 
 # ── Sample data ───────────────────────────────────────────────────────────────
 
@@ -138,13 +142,15 @@ def render_sidebar():
 
         st.divider()
         st.caption("Sync Jira statuses to Google Sheet before processing.")
-        if st.button("🔄 Sync Jira Statuses", use_container_width=True):
+        if st.button("🔄 Sync Jira Statuses", use_container_width=True, disabled=DEMO_MODE):
             with st.spinner("Syncing..."):
                 try:
                     sync_jira_to_sheet()
                     st.success("Sync complete!")
                 except Exception as e:
                     st.error(f"Sync failed: {e}")
+        if DEMO_MODE:
+            st.caption("🧪 Sync disabled in demo mode.")
 
         st.divider()
         stage = st.session_state.get("stage", "input")
@@ -350,6 +356,13 @@ def run_processing() -> list:
                     results.append({"label": error_type, "status": "already_tracked", "ticket": existing})
                     continue
 
+                if DEMO_MODE:
+                    fake_key = f"DEMO-{len(results)+1}"
+                    fake_url = f"https://your-org.atlassian.net/browse/{fake_key}"
+                    st.write(f"  ✅ [Demo] Would create ticket {fake_key}")
+                    results.append({"label": error_type, "status": "created", "ticket": fake_key, "url": fake_url})
+                    continue
+
                 jira_ticket = find_existing_ticket(error_type)
                 if jira_ticket:
                     st.write(f"  → Jira ticket found: {jira_ticket}")
@@ -425,6 +438,13 @@ def run_processing() -> list:
                         update_last_seen(code, report_date)
                         st.write(f"  → Already tracked: {existing}")
                         results.append({"label": f"Error {code}", "status": "already_tracked", "ticket": existing})
+                        continue
+
+                    if DEMO_MODE:
+                        fake_key = f"DEMO-{len(results)+1}"
+                        fake_url = f"https://your-org.atlassian.net/browse/{fake_key}"
+                        st.write(f"  ✅ [Demo] Would create ticket {fake_key}")
+                        results.append({"label": f"Error {code}", "status": "created", "ticket": fake_key, "url": fake_url})
                         continue
 
                     if avg_weeks > 0:
@@ -614,31 +634,35 @@ client_x509_cert_url        = "https://www.googleapis.com/robot/v1/metadata/x509
 
     st.divider()
     st.subheader("Connection Status")
-    col1, col2, col3 = st.columns(3)
 
-    with col1:
-        try:
-            from jira_handler import get_jira_client
-            get_jira_client()
-            st.success("✅ Jira")
-        except Exception as e:
-            st.error(f"❌ Jira\n\n`{str(e)[:120]}`")
+    if DEMO_MODE:
+        st.warning("🧪 Running in demo mode — add real credentials above to test connections.")
+    else:
+        col1, col2, col3 = st.columns(3)
 
-    with col2:
-        try:
-            from s3_handler import get_s3_client
-            get_s3_client()
-            st.success("✅ AWS / S3")
-        except Exception as e:
-            st.error(f"❌ AWS / S3\n\n`{str(e)[:120]}`")
+        with col1:
+            try:
+                from jira_handler import get_jira_client
+                get_jira_client()
+                st.success("✅ Jira")
+            except Exception as e:
+                st.error(f"❌ Jira\n\n`{str(e)[:120]}`")
 
-    with col3:
-        try:
-            from sheets_handler import get_sheets_client
-            get_sheets_client()
-            st.success("✅ Google Sheets")
-        except Exception as e:
-            st.error(f"❌ Google Sheets\n\n`{str(e)[:120]}`")
+        with col2:
+            try:
+                from s3_handler import get_s3_client
+                get_s3_client()
+                st.success("✅ AWS / S3")
+            except Exception as e:
+                st.error(f"❌ AWS / S3\n\n`{str(e)[:120]}`")
+
+        with col3:
+            try:
+                from sheets_handler import get_sheets_client
+                get_sheets_client()
+                st.success("✅ Google Sheets")
+            except Exception as e:
+                st.error(f"❌ Google Sheets\n\n`{str(e)[:120]}`")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -650,6 +674,14 @@ st.caption(
     "Paste your weekly Aetna error report email data, review the parsed errors, "
     "and automatically create Jira tickets and log results to Google Sheets."
 )
+
+if DEMO_MODE:
+    st.info(
+        "**Demo mode** — no credentials configured. "
+        "Processing will simulate ticket creation without connecting to Jira, S3, or Google Sheets. "
+        "Add real credentials in the ⚙️ Settings tab to enable live mode.",
+        icon="🧪",
+    )
 
 tab1, tab2, tab3 = st.tabs(["📋 Process Report", "📊 View Tracker", "⚙️ Settings"])
 
