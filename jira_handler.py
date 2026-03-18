@@ -48,8 +48,16 @@ def find_existing_ticket(error_code):
     if ERROR_TITLE_MAP[error_code] is None:
         return None
     
-    # Search for open tickets with matching summary and label
-    search_term = ERROR_TITLE_MAP[error_code].split("{")[0].strip()
+    # Use the last static segment after all {variables} — most specific part of the title
+    import re
+    title_template = ERROR_TITLE_MAP[error_code]
+    after_last_var = title_template.rsplit("}", 1)[-1].strip(" -|,")
+    if after_last_var:
+        search_term = after_last_var
+    else:
+        # Variable is last (e.g. FAILED_IMAGES) — use the longest static segment
+        segments = re.split(r'\{[^}]+\}', title_template)
+        search_term = max((s.strip(" -|,") for s in segments if s.strip(" -|,")), key=len)
     
     issues = jira.search_issues(
         f'project={JIRA_PROJECT_KEY} '
