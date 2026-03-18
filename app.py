@@ -363,11 +363,15 @@ def run_processing() -> list:
                     results.append({"label": error_type, "status": "created", "ticket": fake_key, "url": fake_url})
                     continue
 
-                jira_ticket = find_existing_ticket(error_type)
-                if jira_ticket:
-                    st.write(f"  → Jira ticket found: {jira_ticket}")
-                    results.append({"label": error_type, "status": "already_tracked", "ticket": jira_ticket})
-                    continue
+                # MISSING_CDF and FAILED_IMAGES are per-week errors with different
+                # chart IDs each time — skip Jira search and always create a new ticket.
+                per_week_errors = {"MISSING_CDF", "FAILED_IMAGES"}
+                if error_type not in per_week_errors:
+                    jira_ticket = find_existing_ticket(error_type)
+                    if jira_ticket:
+                        st.write(f"  → Jira ticket found: {jira_ticket}")
+                        results.append({"label": error_type, "status": "already_tracked", "ticket": jira_ticket})
+                        continue
 
                 local_file = get_file_for_error(error_type, report_date)
                 new_count = total_count

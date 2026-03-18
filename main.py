@@ -198,16 +198,19 @@ def process_summary_errors(summary_counts, report_date, display_date, program):
             })
             continue
         
-        # Check Jira directly
-        jira_ticket = find_existing_ticket(error_type)
-        if jira_ticket:
-            print(f"  Found existing Jira ticket {jira_ticket}. Skipping.")
-            results.append({
-                "error_type": error_type,
-                "status": "already_tracked",
-                "ticket": jira_ticket
-            })
-            continue
+        # MISSING_CDF and FAILED_IMAGES are per-week errors with different
+        # chart IDs each time — skip Jira search and always create a new ticket.
+        per_week_errors = {"MISSING_CDF", "FAILED_IMAGES"}
+        if error_type not in per_week_errors:
+            jira_ticket = find_existing_ticket(error_type)
+            if jira_ticket:
+                print(f"  Found existing Jira ticket {jira_ticket}. Skipping.")
+                results.append({
+                    "error_type": error_type,
+                    "status": "already_tracked",
+                    "ticket": jira_ticket
+                })
+                continue
         
         # Download file from S3 and get accurate new count
         local_file = get_file_for_error(error_type, report_date)
