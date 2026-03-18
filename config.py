@@ -1,5 +1,12 @@
 import os
 
+# Load .env when running outside Streamlit (e.g. main.py via .command file)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 def _secret(section: str, key: str, env_var: str = "") -> str:
     """
