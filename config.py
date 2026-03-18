@@ -1,24 +1,32 @@
 import os
+import toml
 
-# Load .env when running outside Streamlit (e.g. main.py via .command file)
+# Load .streamlit/secrets.toml directly when running outside Streamlit
+_toml_secrets: dict = {}
+_secrets_path = os.path.join(os.path.dirname(__file__), ".streamlit", "secrets.toml")
 try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
+    _toml_secrets = toml.load(_secrets_path)
+except Exception:
     pass
 
 
 def _secret(section: str, key: str, env_var: str = "") -> str:
     """
-    Read a secret from st.secrets (when running under Streamlit),
-    falling back to the environment variable named `env_var`.
-    Returns an empty string if neither is available.
+    Read a secret in priority order:
+    1. st.secrets (when running under Streamlit)
+    2. .streamlit/secrets.toml (when running main.py directly)
+    3. Environment variable
     """
     try:
         import streamlit as st
         return st.secrets[section][key]
     except Exception:
-        return os.environ.get(env_var, "")
+        pass
+    try:
+        return _toml_secrets[section][key]
+    except (KeyError, TypeError):
+        pass
+    return os.environ.get(env_var, "")
 
 
 # Jira Configuration
