@@ -187,7 +187,11 @@ def process_summary_errors(summary_counts, report_date, display_date, program):
         print(f"\nProcessing {error_type} (total count: {total_count})...")
         
         # Check if already tracked in database
-        existing_ticket = is_error_already_tracked(error_type, report_date)
+        per_week_errors = {"MISSING_CDF", "FAILED_IMAGES"}
+        existing_ticket = is_error_already_tracked(
+            error_type, report_date,
+            date_specific=(error_type in per_week_errors)
+        )
         if existing_ticket:
             print(f"  Already tracked - ticket {existing_ticket} exists. Updating last seen date.")
             update_last_seen(error_type, report_date)
@@ -197,10 +201,9 @@ def process_summary_errors(summary_counts, report_date, display_date, program):
                 "ticket": existing_ticket
             })
             continue
-        
+
         # MISSING_CDF and FAILED_IMAGES are per-week errors with different
         # chart IDs each time — skip Jira search and always create a new ticket.
-        per_week_errors = {"MISSING_CDF", "FAILED_IMAGES"}
         if error_type not in per_week_errors:
             jira_ticket = find_existing_ticket(error_type)
             if jira_ticket:

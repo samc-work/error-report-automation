@@ -30,26 +30,37 @@ def init_db():
     conn.close()
     print("Database initialized successfully")
 
-def is_error_already_tracked(error_code, report_date):
+def is_error_already_tracked(error_code, report_date, date_specific=False):
     """
-    Check if an error code already has an open ticket
-    Returns the jira ticket id if found, None if not
+    Check if an error code already has an open ticket.
+    If date_specific=True, only matches entries for this exact report date
+    (used for per-week errors like MISSING_CDF and FAILED_IMAGES).
+    Returns the jira ticket id if found, None if not.
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT jira_ticket_id 
-        FROM tracked_errors 
-        WHERE error_code = ? 
-        AND status = 'open'
-    """, (error_code,))
-    
+
+    if date_specific:
+        cursor.execute("""
+            SELECT jira_ticket_id
+            FROM tracked_errors
+            WHERE error_code = ?
+            AND report_date = ?
+            AND status = 'open'
+        """, (error_code, report_date))
+    else:
+        cursor.execute("""
+            SELECT jira_ticket_id
+            FROM tracked_errors
+            WHERE error_code = ?
+            AND status = 'open'
+        """, (error_code,))
+
     result = cursor.fetchone()
     conn.close()
-    
+
     if result:
-        return result[0]  # return the existing ticket id
+        return result[0]
     return None
 
 def log_error(error_code, jira_ticket_id, jira_ticket_url, report_date, 

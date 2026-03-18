@@ -349,7 +349,11 @@ def run_processing() -> list:
 
             st.write(f"Processing **{error_type}**...")
             try:
-                existing = is_error_already_tracked(error_type, report_date)
+                per_week_errors = {"MISSING_CDF", "FAILED_IMAGES"}
+                existing = is_error_already_tracked(
+                    error_type, report_date,
+                    date_specific=(error_type in per_week_errors)
+                )
                 if existing:
                     update_last_seen(error_type, report_date)
                     st.write(f"  → Already tracked: {existing}")
@@ -365,7 +369,6 @@ def run_processing() -> list:
 
                 # MISSING_CDF and FAILED_IMAGES are per-week errors with different
                 # chart IDs each time — skip Jira search and always create a new ticket.
-                per_week_errors = {"MISSING_CDF", "FAILED_IMAGES"}
                 if error_type not in per_week_errors:
                     jira_ticket = find_existing_ticket(error_type)
                     if jira_ticket:
